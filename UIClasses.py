@@ -309,6 +309,23 @@ class MainUI(QMainWindow):
         self.add_category = AddCategoryUI(self.app, self)
         self.add_category.show()
 
+    def favoritesClicked(self):
+        self.favorites_contents = QWidget()
+        layout = QGridLayout()
+
+        count = 0
+        for product_link in self.app.current_user.favorites:
+
+            product_preview = ProductPreview(self.app, self.app.products[product_link])
+            layout.addWidget(product_preview, *self.calculate_row_column(count))
+
+            count += 1
+
+        self.favorites_contents.setLayout(layout)
+        self.favorites_area.setWidget(self.favorites_contents)
+
+        self.stackedWidget.setCurrentWidget(self.favorites_page)
+
     def userbuttonClicked(self):
         self.user_page_change_widget.close()
 

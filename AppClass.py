@@ -1,9 +1,10 @@
 import json
-from threading import Thread
+from threading import Thread, Lock
 from UserClass import User
 from ProductClass import Product
 from SignUpAndLogin import check_sign_up_informations, check_login_informations, check_change_informations
 from DigiKalaScraping import DigiKalaScrape
+
 
 class App:
     users_file_path = './Files/Users.txt'
@@ -69,6 +70,44 @@ class App:
         for t in threads: t.start()
         for t in threads: t.join()
 
+    def check_matching(self, key_word: str, product: Product, mutex: Lock):
+        words = key_word.lower().split()
+
+        matched = True if [word in product.title.lower() for word in words].count(True) >= (len(words) / 2) else False
+
+        if matched:
+            mutex.acquire()
+            self.search_results.append(product)
+            mutex.release()
+
+    def search(self, key_word: str):
+        self.search_results = []
+        mutex = Lock()
+
+        threads = [Thread(target = self.check_matching, args = (key_word, product, mutex)) for product in self.products.values()]
+        for t in threads: t.start()
+        for t in threads: t.join()
+
+        result_count = len(self.search_results)
+        if result_count < 5:
+            product_count = 5 - result_count
+
+            matched_products = DigiKalaScrape()
+
+            results = matched_products.scrape_category(key_word, self.products, product_count)
+            self.products.update(results)
+
+            self.search_results += list(results.values())
+
+    def add_favorite(self, product_link):
+        self.current_user.favorites.append(product_link)
+
+        Thread(target = self.set_informations, args = (True, False, False)).start()
+
+    def remove_favorite(self, product_link):
+        self.current_user.favorites.remove(product_link)
+
+        Thread(target = self.set_informations, args = (True, False, False)).start()
 
     def get_informations(self):
         """This method gets users informations from database"""
