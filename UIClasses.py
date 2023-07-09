@@ -272,6 +272,20 @@ class CategoryArea(QScrollArea):
         return row, column
 
 
+class SearchThread(QThread):
+    def __init__(self, app: App):
+        super().__init__()
+
+        self.app = app
+        self.key_word = ''
+
+    def search(self):
+        self.app.search(self.key_word)
+
+    def run(self):
+        self.search()
+
+
 class MainUI(QMainWindow):
     main_window_ui_path = './UIs/MainWindow.ui'
 
@@ -282,10 +296,18 @@ class MainUI(QMainWindow):
         self.app = app
         self.start_up = start_up
 
+        self.search_thread = SearchThread(app)
+        self.search_thread.started.connect(self.search_thread_started)
+        self.search_thread.finished.connect(self.search_thread_finished)
+
         self.full_menu_widget.setHidden(True)
 
         for category in self.app.categories:
             self.set_category(category)
+
+    def addcategoryClicked(self):
+        self.add_category = AddCategoryUI(self.app, self)
+        self.add_category.show()
 
     def userbuttonClicked(self):
         self.user_page_change_widget.close()
@@ -323,6 +345,70 @@ class MainUI(QMainWindow):
             self.user_page_email_label.setText(f"Email: {self.app.current_user.email}")
             self.user_page_change_widget.close()
 
+    def categoryChanged(self):
+        self.stackedWidget.setCurrentWidget(self.categories.currentData())
+
+    def categoryiconClicked(self):
+        self.sidebar_button.setChecked(True)
+        if self.categories.currentText():
+            self.categoryChanged()
+
+    def searchClicked(self):
+        self.stackedWidget.setCurrentWidget(self.search_result_page)
+
+        key_word = self.search_input.text()
+
+        self.search_thread.key_word = key_word
+        self.search_thread.start()
+
+    def search_thread_started(self):
+        self.add_button.setDisabled(True)
+        self.add_button_2.setDisabled(True)
+        self.search_button.setDisabled(True)
+        self.search_label.setText("Searching...")
+
+    def search_thread_finished(self):
+        self.add_button.setEnabled(True)
+        self.add_button_2.setEnabled(True)
+        self.search_button.setEnabled(True)
+        self.search_label.setText("")
+
+        self.show_search_results()
+
+    def show_search_results(self):
+        self.search_result_contents = QWidget()
+        layout = QGridLayout()
+
+        count = 0
+        for product in self.app.search_results:
+
+            product_preview = ProductPreview(self.app, product)
+            layout.addWidget(product_preview, *self.calculate_row_column(count))
+
+            count += 1
+
+        self.search_result_contents.setLayout(layout)
+        self.search_result_area.setWidget(self.search_result_contents)
+
+        self.stackedWidget.setCurrentWidget(self.search_result_page)
+
     def logoutClicked(self):
         self.start_up.show_again()
         self.close()
+
+    def set_category(self, category_name: str):
+        category_widget = CategoryArea(self.app, category_name)
+        self.categories.addItem(category_name, category_widget)
+
+        self.stackedWidget.addWidget(category_widget)
+
+    def set_new_category(self, category_name: str):
+        category_widget = CategoryArea(self.app, category_name)
+
+        self.categories.addItem(category_name, category_widget)
+        self.stackedWidget.addWidget(category_widget)
+
+    @staticmethod
+    def calculate_row_column(num: int):
+        row, column = num // 3, num % 3
+        return row, column
