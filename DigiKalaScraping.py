@@ -11,7 +11,7 @@ from ProductClass import Product
 
 
 class DigiKalaScrape:
-    path = '/Users/LordM/Downloads/chromedriver'
+    path = './Files/Chromedriver/chromedriver'
 
     def __init__(self):
         self.mutex = Lock()
