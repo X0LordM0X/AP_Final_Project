@@ -80,6 +80,9 @@ class App:
             self.search_results.append(product)
             mutex.release()
 
+    def clear_search_result(self):
+        self.search_results = []
+
     def search(self, key_word: str):
         self.search_results = []
         mutex = Lock()

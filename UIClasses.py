@@ -375,8 +375,9 @@ class MainUI(QMainWindow):
 
         key_word = self.search_input.text()
 
-        self.search_thread.key_word = key_word
-        self.search_thread.start()
+        if key_word != "":
+            self.search_thread.key_word = key_word
+            self.search_thread.start()
 
     def search_thread_started(self):
         self.add_button.setDisabled(True)
@@ -410,6 +411,9 @@ class MainUI(QMainWindow):
         self.stackedWidget.setCurrentWidget(self.search_result_page)
 
     def logoutClicked(self):
+        self.app.clear_search_result()
+        self.show_search_results()
+
         self.start_up.show_again()
         self.close()
 
