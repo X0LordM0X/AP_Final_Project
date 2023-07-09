@@ -77,3 +77,34 @@ def check_login_informations(func):
         return True, func(*args, **kwargs)
 
     return check
+
+def check_change_informations(func):
+
+    def check(*args, **kwargs):
+        current_user_name, current_email = kwargs['current_user_name'], kwargs['current_email']
+        current_pass_word = kwargs['current_pass_word']
+
+        new_user_name, new_email = kwargs['new_user_name'], kwargs['new_email']
+        new_pass_word, pass_word_repeat = kwargs['new_pass_word'], kwargs['pass_word_repeat']
+        users = kwargs['users']
+
+        if not new_user_name.isalnum():
+            return False, "username must only contain alphanumeric characters."
+
+        if new_user_name != current_user_name and new_user_name in users:
+            return False, "this username is already taken."
+
+        if new_email != current_email and not check_email(new_email):
+            return False, "email is invalid."
+
+        if new_pass_word and new_pass_word != current_pass_word:
+            check_password_result, error = check_password(new_pass_word)
+            if not check_password_result:
+                return False, error
+
+            if new_pass_word != pass_word_repeat:
+                return False, "passwords doesn't match."
+
+        return True, func(*args, **kwargs)
+
+    return check

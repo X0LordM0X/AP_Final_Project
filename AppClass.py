@@ -2,7 +2,7 @@ import json
 from threading import Thread
 from UserClass import User
 from ProductClass import Product
-from SignUpAndLogin import check_sign_up_informations, check_login_informations
+from SignUpAndLogin import check_sign_up_informations, check_login_informations, check_change_informations
 
 class App:
     users_file_path = './Files/Users.txt'
@@ -31,6 +31,20 @@ class App:
     def login(self, *, user_name: str, pass_word: str, users: dict):
         self.current_user = users[user_name]
         return "you logged in successfully."
+
+    @check_change_informations
+    def change_current_user_informations(self, *, current_user_name: str, current_email: str, current_pass_word: str,
+                                         new_user_name: str, new_email: str, new_pass_word: str, pass_word_repeat: str,
+                                         users: dict):
+        self.current_user._user_name, self.current_user._email = new_user_name, new_email
+        if new_pass_word: self.current_user._pass_word = new_pass_word
+
+        del self.users[current_user_name]
+        self.users[new_user_name] = self.current_user
+
+        Thread(target = self.set_informations, args = (True, )).start()
+
+        return "changes has been saved successfully."
 
     def get_informations(self):
         """This method gets users informations from database"""
