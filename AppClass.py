@@ -1,6 +1,8 @@
 import json
+from threading import Thread
 from UserClass import User
 from ProductClass import Product
+from SignUpAndLogin import check_sign_up_informations, check_login_informations
 
 class App:
     users_file_path = './Files/Users.txt'
@@ -13,6 +15,22 @@ class App:
         self.products = {}                    # {DigiKala link: Product object}
         self.categories = {}                  # {category name: [DigiKala link]}
         self.get_informations()
+
+    @check_sign_up_informations
+    def sign_up(self, *, user_name: str, email: str, pass_word: str, pass_word_repeat: str, users: dict):
+        new_user = User(user_name, email, pass_word)
+
+        self.current_user = new_user
+        self.users[user_name] = new_user
+
+        Thread(target = self.set_informations, args = (True, )).start()
+
+        return "you signed up successfully."
+
+    @check_login_informations
+    def login(self, *, user_name: str, pass_word: str, users: dict):
+        self.current_user = users[user_name]
+        return "you logged in successfully."
 
     def get_informations(self):
         """This method gets users informations from database"""
